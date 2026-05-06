@@ -1,0 +1,37 @@
+{
+    "window_title": "陰陽師Onmyoji",
+    "confidence_threshold": 0.6,
+    "loop_delay": 0.4,
+    "update": {
+        "enabled": true,
+        "release_api_url": "https://api.github.com/repos/<OWNER>/<REPO>/releases/latest",
+        "manifest_asset_name": "release.json",
+        "asset_name": "Rubitdd-Bot-Release.zip"
+    },
+    "templates": {
+        "start_button": "assets/start.png",
+        "accept_button": "assets/accept.png",
+        "dismiss_button": "assets/dismiss.png",
+        "continue_button": "assets/continue.png",
+        "clear_button": "assets/clear.png",
+        "donee_button": "assets/donee.png",
+        "done1_button": "assets/done1.png"
+    },
+    "sougenbi_templates": {
+        "start": "sougenbi/start.png",
+        "accept": "sougenbi/accept.png",
+        "dismiss": "sougenbi/dismiss.png",
+        "donee": "sougenbi/donee.png",
+        "done1": "sougenbi/done1.png",
+        "donee1": "sougenbi/donee1.png"
+    },
+    "realm_templates": {
+        "done1": "realm/done1.png",
+        "hogan": "realm/hogan.png",
+        "next": "realm/next.png",
+        "attack": "realm/attack.png",
+        "mark": "realm/mark.png",
+        "lose": "realm/lose.png",
+        "lose1": "realm/lose1.png"
+    }
+}

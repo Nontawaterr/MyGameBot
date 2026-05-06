@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build outputs
+build/
+dist/
+
+# PyInstaller / release artifacts
+Rubitdd-Bot-Release.zip
+release.json
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Editor settings
+.vscode/
+.idea/
+
