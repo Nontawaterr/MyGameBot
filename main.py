@@ -735,6 +735,28 @@ class BotGUI:
                         self.bot.background_click(dismiss_pos[0], dismiss_pos[1])
                         time.sleep(0.5)
 
+                continue_template = templates.get('continue')
+                if continue_template:
+                    continue_pos = self.bot.find_image(
+                        continue_template,
+                        self.config['confidence_threshold']
+                    )
+                    if continue_pos:
+                        self.log_message(f"✓ พบปุ่ม Continue ที่ตำแหน่ง {continue_pos}")
+                        self.bot.background_click(continue_pos[0], continue_pos[1])
+                        time.sleep(0.5)
+
+                clear_template = templates.get('clear')
+                if clear_template:
+                    clear_pos = self.bot.find_image(
+                        clear_template,
+                        self.config['confidence_threshold']
+                    )
+                    if clear_pos:
+                        self.log_message(f"✓ พบปุ่ม Clear ที่ตำแหน่ง {clear_pos}")
+                        self.bot.background_click(clear_pos[0], clear_pos[1])
+                        time.sleep(0.5)
+
                 done1_template = templates.get('done1')
                 if done1_template:
                     done1_pos = self.bot.find_image(

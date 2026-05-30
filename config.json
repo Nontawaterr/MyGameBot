@@ -38,6 +38,8 @@
         "challenge": "yonder/challenge.jpg",
         "accept": "yonder/accept.png",
         "dismiss": "yonder/dismiss.png",
+        "continue": "yonder/continue.png",
+        "clear": "yonder/clear.png",
         "done1": "yonder/done1.png"
     }
 }
