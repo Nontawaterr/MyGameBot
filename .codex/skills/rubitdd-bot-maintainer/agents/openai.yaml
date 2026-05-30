@@ -1,0 +1,3 @@
+display_name: Rubitdd Bot Maintainer
+short_description: Maintain Rubitdd-Bot workflows
+default_prompt: Use this skill to modify Rubitdd-Bot safely, update image assets, run checks, build the executable, or prepare a release.

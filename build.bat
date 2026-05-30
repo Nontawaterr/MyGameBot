@@ -6,7 +6,7 @@ if exist "dist" rmdir /s /q "dist"
 if exist "build" rmdir /s /q "build"
 
 REM Build EXE with bundled assets
-pyinstaller --noconsole --onefile --name "Rubitdd-Bot" --icon "app.ico" --add-data "assets;assets" --add-data "sougenbi;sougenbi" --add-data "realm;realm" --add-data "config.json;." --collect-all customtkinter main.py
+pyinstaller --noconsole --onefile --name "Rubitdd-Bot" --icon "app.ico" --add-data "assets;assets" --add-data "sougenbi;sougenbi" --add-data "realm;realm" --add-data "yonder;yonder" --add-data "config.json;." --collect-all customtkinter main.py
 
 echo.
 echo Build complete!

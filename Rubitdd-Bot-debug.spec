@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('assets', 'assets'), ('sougenbi', 'sougenbi'), ('realm', 'realm'), ('config.json', '.')]
+datas = [('assets', 'assets'), ('sougenbi', 'sougenbi'), ('realm', 'realm'), ('yonder', 'yonder'), ('config.json', '.')]
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('customtkinter')

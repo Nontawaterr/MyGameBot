@@ -36,6 +36,7 @@
     },
     "yonder_templates": {
         "challenge": "yonder/challenge.jpg",
+        "accept": "yonder/accept.png",
         "dismiss": "yonder/dismiss.png",
         "done1": "yonder/done1.png"
     }

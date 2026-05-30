@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 import zipfile
 from dataclasses import dataclass
@@ -335,6 +336,12 @@ def maybe_run_update(root, config):
             launch_exe_name,
         )
         return True
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            # No release published yet — not an error
+            return False
+        _show_error("Update failed", str(exc), parent=root)
+        return False
     except Exception as exc:
         _show_error("Update failed", str(exc), parent=root)
         return False

@@ -713,6 +713,17 @@ class BotGUI:
                     self.bot.background_click(challenge_pos[0], challenge_pos[1])
                     time.sleep(0.5)
 
+                accept_template = templates.get('accept')
+                if accept_template:
+                    accept_pos = self.bot.find_image(
+                        accept_template,
+                        self.config['confidence_threshold']
+                    )
+                    if accept_pos:
+                        self.log_message(f"✓ พบปุ่ม Accept ที่ตำแหน่ง {accept_pos}")
+                        self.bot.background_click(accept_pos[0], accept_pos[1])
+                        time.sleep(0.5)
+
                 dismiss_template = templates.get('dismiss')
                 if dismiss_template:
                     dismiss_pos = self.bot.find_image(
@@ -748,7 +759,6 @@ def load_config():
 
 def main():
     root = ctk.CTk()
-    root.withdraw()
 
     config = None
     try:
@@ -756,12 +766,21 @@ def main():
     except Exception:
         pass
 
-    if config and maybe_run_update(root, config):
-        root.destroy()
-        return
-
+    # Show the GUI immediately so the window always appears, even if the
+    # update check is slow or fails.
     app = BotGUI(root)
-    root.deiconify()
+
+    def run_update_check():
+        try:
+            if config and maybe_run_update(root, config):
+                # Update accepted: close so the restart helper can replace files.
+                root.destroy()
+        except Exception:
+            pass
+
+    if config:
+        root.after(500, run_update_check)
+
     root.mainloop()
 
 if __name__ == "__main__":

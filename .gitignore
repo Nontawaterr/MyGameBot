@@ -7,9 +7,6 @@ __pycache__/
 .venv/
 venv/
 env/
-skills/
-
-
 
 # Build outputs
 build/
@@ -23,8 +20,3 @@ release.json
 *.log
 *.tmp
 *.temp
-
-# Editor settings
-.vscode/
-.idea/
-
