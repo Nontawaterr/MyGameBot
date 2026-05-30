@@ -4,7 +4,7 @@
     "loop_delay": 0.4,
     "update": {
         "enabled": true,
-        "release_api_url": "https://api.github.com/repos/<OWNER>/<REPO>/releases/latest",
+        "release_api_url": "https://api.github.com/repos/Nontawaterr/MyGameBot/releases/latest",
         "manifest_asset_name": "release.json",
         "asset_name": "Rubitdd-Bot-Release.zip"
     },
@@ -33,5 +33,10 @@
         "mark": "realm/mark.png",
         "lose": "realm/lose.png",
         "lose1": "realm/lose1.png"
+    },
+    "yonder_templates": {
+        "challenge": "yonder/challenge.jpg",
+        "dismiss": "yonder/dismiss.png",
+        "done1": "yonder/done1.png"
     }
 }

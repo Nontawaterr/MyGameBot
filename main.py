@@ -2,11 +2,38 @@ import json
 import time
 import os
 import sys
-import customtkinter as ctk
 import threading
 from lib.game_control import GameControl
 from lib.updater import maybe_run_update
 from lib.version import APP_VERSION
+
+
+def ensure_tk_environment():
+    """
+    Ensure Tk can find Tcl/Tk runtime files when running from virtual environments.
+    """
+    base_dirs = []
+    for candidate in (sys.base_prefix, sys.base_exec_prefix, sys.prefix):
+        if candidate and candidate not in base_dirs:
+            base_dirs.append(candidate)
+
+    if not os.environ.get("TCL_LIBRARY"):
+        for base in base_dirs:
+            tcl_path = os.path.join(base, "tcl", "tcl8.6")
+            if os.path.isfile(os.path.join(tcl_path, "init.tcl")):
+                os.environ["TCL_LIBRARY"] = tcl_path
+                break
+
+    if not os.environ.get("TK_LIBRARY"):
+        for base in base_dirs:
+            tk_path = os.path.join(base, "tcl", "tk8.6")
+            if os.path.isfile(os.path.join(tk_path, "tk.tcl")):
+                os.environ["TK_LIBRARY"] = tk_path
+                break
+
+
+ensure_tk_environment()
+import customtkinter as ctk
 
 # Set appearance mode and default color theme
 ctk.set_appearance_mode("dark")
@@ -32,9 +59,11 @@ class BotGUI:
         self.is_running = False
         self.is_sougenbi_running = False
         self.is_realm_running = False
+        self.is_yonder_running = False
         self.bot_thread = None
         self.sougenbi_thread = None
         self.realm_thread = None
+        self.yonder_thread = None
         self.config = None
         self.bot = None
         
@@ -58,6 +87,7 @@ class BotGUI:
         self.tab_control.add("soul")
         self.tab_control.add("sougenbi")
         self.tab_control.add("realm")
+        self.tab_control.add("yonder")
         
         # Status Label
         self.status_label = ctk.CTkLabel(self.tab_control.tab("soul"), 
@@ -171,7 +201,46 @@ class BotGUI:
                                         state="disabled",
                                         command=self.stop_realm)
         self.realm_stop_button.pack(side="left", padx=10)
-        
+ 
+        # --- Yonder Tab UI ---
+        self.yonder_status_label = ctk.CTkLabel(
+            self.tab_control.tab("yonder"),
+            text="● สถานะ: ปิด",
+            font=("Arial", 14, "bold"),
+            text_color="#ff6b6b",
+        )
+        self.yonder_status_label.pack(pady=20)
+
+        yonder_button_frame = ctk.CTkFrame(self.tab_control.tab("yonder"), fg_color="transparent")
+        yonder_button_frame.pack(pady=10)
+
+        self.yonder_start_button = ctk.CTkButton(
+            yonder_button_frame,
+            text="▶ เริ่มทำงาน",
+            font=("Arial", 13, "bold"),
+            fg_color="#51cf66",
+            hover_color="#40c057",
+            width=160,
+            height=40,
+            corner_radius=8,
+            command=self.start_yonder,
+        )
+        self.yonder_start_button.pack(side="left", padx=10)
+
+        self.yonder_stop_button = ctk.CTkButton(
+            yonder_button_frame,
+            text="■ หยุดทำงาน",
+            font=("Arial", 13, "bold"),
+            text_color="white",
+            fg_color="#000000",
+            hover_color="#131313",
+            width=160,
+            height=40,
+            corner_radius=8,
+            state="disabled",
+            command=self.stop_yonder,
+        )
+        self.yonder_stop_button.pack(side="left", padx=10)
 
         
     def log_message(self, message):
@@ -194,6 +263,10 @@ class BotGUI:
             if 'realm_templates' in self.config:
                 for key, path in self.config['realm_templates'].items():
                     self.config['realm_templates'][key] = resource_path(path)
+
+            if 'yonder_templates' in self.config:
+                for key, path in self.config['yonder_templates'].items():
+                    self.config['yonder_templates'][key] = resource_path(path)
 
             self.log_message("✓ โหลด config.json สำเร็จ")
             self.log_message(f"  หน้าต่างเป้าหมาย: {self.config['window_title']}")
@@ -584,6 +657,89 @@ class BotGUI:
         except Exception as e:
             self.log_message(f"✗ ข้อผิดพลาด: {str(e)}")
             self.root.after(0, self.stop_realm)
+
+    def start_yonder(self):
+        if self.is_yonder_running:
+            return
+
+        if not self.config:
+            self.log_message("✗ กรุณาตรวจสอบไฟล์ config.json")
+            return
+
+        self.is_yonder_running = True
+        self.yonder_start_button.configure(state="disabled")
+        self.yonder_stop_button.configure(state="normal")
+        self.yonder_status_label.configure(text="● สถานะ: กำลังทำงาน", text_color="#51cf66")
+
+        self.log_message("=== เริ่มทำงานบอท Yonder ===")
+
+        self.yonder_thread = threading.Thread(target=self.run_yonder, daemon=True)
+        self.yonder_thread.start()
+
+    def stop_yonder(self):
+        if not self.is_yonder_running:
+            return
+
+        self.is_yonder_running = False
+        self.yonder_start_button.configure(state="normal")
+        self.yonder_stop_button.configure(state="disabled")
+        self.yonder_status_label.configure(text="● สถานะ: ปิด", text_color="#ff6b6b")
+
+        self.log_message("=== หยุดทำงานบอท Yonder ===")
+
+    def run_yonder(self):
+        try:
+            if not self.bot:
+                self.bot = GameControl(self.config['window_title'])
+                self.log_message("✓ เชื่อมต่อหน้าต่างเกมสำเร็จ")
+
+            templates = self.config.get('yonder_templates', {})
+            challenge_template = templates.get('challenge')
+            if not challenge_template:
+                self.log_message("✗ ไม่พบ yonder_templates.challenge ใน config.json")
+                self.root.after(0, self.stop_yonder)
+                return
+
+            while self.is_yonder_running:
+                self.log_message("กำลังสแกน Yonder...")
+
+                challenge_pos = self.bot.find_image(
+                    challenge_template,
+                    self.config['confidence_threshold']
+                )
+
+                if challenge_pos:
+                    self.log_message(f"✓ พบ Challenge ที่ตำแหน่ง {challenge_pos}")
+                    self.bot.background_click(challenge_pos[0], challenge_pos[1])
+                    time.sleep(0.5)
+
+                dismiss_template = templates.get('dismiss')
+                if dismiss_template:
+                    dismiss_pos = self.bot.find_image(
+                        dismiss_template,
+                        self.config['confidence_threshold']
+                    )
+                    if dismiss_pos:
+                        self.log_message(f"✓ พบปุ่ม Dismiss ที่ตำแหน่ง {dismiss_pos}")
+                        self.bot.background_click(dismiss_pos[0], dismiss_pos[1])
+                        time.sleep(0.5)
+
+                done1_template = templates.get('done1')
+                if done1_template:
+                    done1_pos = self.bot.find_image(
+                        done1_template,
+                        self.config['confidence_threshold']
+                    )
+                    if done1_pos:
+                        self.log_message(f"✓ พบปุ่ม Done1 ที่ตำแหน่ง {done1_pos}")
+                        self.bot.background_click(done1_pos[0], done1_pos[1])
+                        time.sleep(0.5)
+
+                time.sleep(self.config['loop_delay'])
+
+        except Exception as e:
+            self.log_message(f"✗ ข้อผิดพลาด: {str(e)}")
+            self.root.after(0, self.stop_yonder)
 
 def load_config():
     config_path = resource_path('config.json')
