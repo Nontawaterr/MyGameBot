@@ -7,9 +7,6 @@ __pycache__/
 .venv/
 venv/
 env/
-.claude
-.agents
-
 
 # Build outputs
 build/
@@ -23,3 +20,37 @@ release.json
 *.log
 *.tmp
 *.temp
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.tox/
+.nox/
+.coverage
+coverage.xml
+htmlcov/
+
+# Editor and OS local files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Local AI/agent tooling
+.agents/
+.claude/
+.codex/
+.memory/
+AGENTS.md
+CLAUDE.md
+CONTEXT.md
+skills-lock.json
+
+# Local debug scratch files
+debug_*.py

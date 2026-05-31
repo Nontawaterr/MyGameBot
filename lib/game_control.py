@@ -7,13 +7,23 @@ import numpy as np
 import cv2
 import os
 import time
+import sys
+
+
+def _safe_print(msg):
+    """Print that won't crash on non-ASCII characters in cp1252 terminals."""
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        print(msg.encode('ascii', errors='replace').decode('ascii'))
+
 
 class GameControl:
     def __init__(self, window_title):
         self.hwnd = win32gui.FindWindow(None, window_title)
         
         if not self.hwnd:
-            print(f"Exact match failed for '{window_title}'. Trying partial match...")
+            _safe_print(f"Exact match failed for '{window_title}'. Trying partial match...")
             hwnd_list = []
             def enum_handler(hwnd, ctx):
                 if win32gui.IsWindowVisible(hwnd):
@@ -25,7 +35,7 @@ class GameControl:
             
             if hwnd_list:
                 self.hwnd = hwnd_list[0]
-                print(f"Found window by partial match: '{win32gui.GetWindowText(self.hwnd)}'")
+                _safe_print(f"Found window by partial match: '{win32gui.GetWindowText(self.hwnd)}'")
 
         if not self.hwnd:
             print("Available visible windows:")
@@ -33,11 +43,11 @@ class GameControl:
                 if win32gui.IsWindowVisible(hwnd):
                     t = win32gui.GetWindowText(hwnd)
                     if t:
-                        print(f" - {t}")
+                        _safe_print(f" - {t}")
             win32gui.EnumWindows(print_window, None)
             raise Exception(f"Window not found: {window_title}")
         
-        print(f"Connected to window: {window_title} (HWND: {self.hwnd})")
+        _safe_print(f"Connected to window: {window_title} (HWND: {self.hwnd})")
 
     def background_screenshot(self):
         """
@@ -90,38 +100,45 @@ class GameControl:
         # Drop alpha channel and return
         return img[..., :3]
 
-    def find_image(self, template_path, threshold=0.8):
+    def find_image(self, template_path, threshold=0.8, return_score=False):
         """
         Finds the template image on the screen.
         Returns (x, y) center coordinates if found, else None.
+        If return_score=True, returns ((x, y) or None, max_val) for debugging.
         """
         if not os.path.exists(template_path):
-            print(f"Template not found: {template_path}")
-            return None
+            _safe_print(f"Template not found: {template_path}")
+            return (None, 0.0) if return_score else None
 
         # Load template
         template = cv2.imread(template_path)
         if template is None:
-            return None
+            return (None, 0.0) if return_score else None
 
         # Capture screen
         screen = self.background_screenshot()
-        
+
         # Convert to BGR if necessary (OpenCV uses BGR)
         # Note: background_screenshot returns BGRA or BGR depending on processing
         # Let's ensure both are compatible.
-        
+
         # Match template
         result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
+        pos = None
         if max_val >= threshold:
             # Calculate center
             h, w = template.shape[:2]
             center_x = max_loc[0] + w // 2
             center_y = max_loc[1] + h // 2
-            return (center_x, center_y)
-        
+            pos = (center_x, center_y)
+
+        if return_score:
+            return (pos, float(max_val))
+        if pos:
+            return pos
+
         return None
 
     def click(self, x, y):
@@ -147,7 +164,7 @@ class GameControl:
         time.sleep(0.05)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
         
-        print(f"Clicked at ({x}, {y}) -> screen ({screen_x}, {screen_y})")
+        _safe_print(f"Clicked at ({x}, {y}) -> screen ({screen_x}, {screen_y})")
 
     def background_click(self, x, y):
         """
@@ -172,9 +189,9 @@ class GameControl:
             client_point = win32gui.ScreenToClient(self.hwnd, (int(screen_x), int(screen_y)))
             client_x, client_y = client_point
             
-            print(f"Coords: Window({x}, {y}) -> Screen({screen_x}, {screen_y}) -> Client({client_x}, {client_y})")
+            _safe_print(f"Coords: Window({x}, {y}) -> Screen({screen_x}, {screen_y}) -> Client({client_x}, {client_y})")
         except Exception as e:
-            print(f"Coordinate conversion failed: {e}")
+            _safe_print(f"Coordinate conversion failed: {e}")
             client_x, client_y = x, y
 
         # Create lParam for coordinates
@@ -186,4 +203,4 @@ class GameControl:
         time.sleep(0.05)
         win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, lParam)
         
-        print(f"Background clicked at Client({client_x}, {client_y})")
+        _safe_print(f"Background clicked at Client({client_x}, {client_y})")
