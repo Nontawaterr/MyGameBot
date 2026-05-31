@@ -576,6 +576,7 @@ class BotGUI:
                         self.log_message(f"✓ พบปุ่ม Done1 ที่ตำแหน่ง {done1_pos}")
                         self.bot.background_click(done1_pos[0], done1_pos[1])
                         time.sleep(0.5)
+                        continue
 
                 # Check for mark to block hogan - check every loop
                 if 'mark' in templates:
@@ -599,7 +600,8 @@ class BotGUI:
                         self.log_message(f"✓ พบปุ่ม Hogan ที่ตำแหน่ง {hogan_pos}")
                         # Click 40px below the found image
                         self.bot.background_click(hogan_pos[0], hogan_pos[1] + 40)
-                        time.sleep(0.5)
+                        time.sleep(1.0)
+                        continue
 
                 # Check for next button
                 if 'next' in templates:
@@ -612,6 +614,7 @@ class BotGUI:
                         self.log_message(f"✓ พบปุ่ม Next ที่ตำแหน่ง {next_pos}")
                         self.bot.background_click(next_pos[0], next_pos[1])
                         time.sleep(0.5)
+                        continue
 
                 # Check for attack button
                 if 'attack' in templates:
@@ -627,6 +630,7 @@ class BotGUI:
                             self.log_message("✓ เริ่มทำงาน Hogan อีกครั้ง")
                             hogan_blocked = False
                         time.sleep(0.5)
+                        continue
 
                 # Check for lose button
                 if 'lose' in templates:
@@ -639,6 +643,7 @@ class BotGUI:
                         self.log_message(f"✓ พบปุ่ม Lose ที่ตำแหน่ง {lose_pos}")
                         self.bot.background_click(lose_pos[0], lose_pos[1])
                         time.sleep(1.5)
+                        continue
 
                 # Check for lose1 button
                 if 'lose1' in templates:

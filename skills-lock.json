@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "context-window-management": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "skillPath": "cli-tool/components/skills/ai-research/context-window-management/SKILL.md",
+      "computedHash": "2bd3e8ea39f1e11333b5d5d598828d23f735a0732d671ae6e76f0d7b2d5d49a1"
+    },
+    "memory": {
+      "source": "johnlindquist/claude",
+      "sourceType": "github",
+      "skillPath": "skills/memory/SKILL.md",
+      "computedHash": "1d259ea7a07a8e0a76a6b019f3abb219d88a6a72ca1347e2de85c6938c76ce32"
+    }
+  }
+}
