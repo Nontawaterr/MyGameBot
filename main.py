@@ -41,7 +41,7 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 # Mode names in display order
-MODE_NAMES = ("soul", "sougenbi", "realm", "yonder")
+MODE_NAMES = ("soul", "sougenbi", "realm", "yonder", "even")
 
 # Config key for each mode's templates section
 MODE_TEMPLATE_KEYS = {
@@ -49,6 +49,7 @@ MODE_TEMPLATE_KEYS = {
     "sougenbi": "sougenbi_templates",
     "realm": "realm_templates",
     "yonder": "yonder_templates",
+    "even": "even_templates",
 }
 
 
@@ -67,7 +68,7 @@ class BotGUI:
     def __init__(self, root):
         self.root = root
         self.root.title(f"Rubitdd-Bot-v{APP_VERSION}")
-        self.root.geometry("650x350")
+        self.root.geometry("720x350")
         self.root.resizable(False, False)
 
         self.bot = None
@@ -238,7 +239,7 @@ class BotGUI:
             return self._run_realm
         if mode_name == "yonder":
             return self._run_yonder
-        # soul and sougenbi use the generic scan loop
+        # soul, sougenbi and even use the generic scan loop
         return lambda: self._run_generic(mode_name)
 
     # ------------------------------------------------------------------
@@ -252,7 +253,7 @@ class BotGUI:
             self.log_message("✓ เชื่อมต่อหน้าต่างเกมสำเร็จ")
 
     def _run_generic(self, mode_name):
-        """Generic scan-and-click loop used by soul and sougenbi."""
+        """Generic scan-and-click loop used by soul, sougenbi and even."""
         try:
             self._ensure_bot()
             mode = self.modes[mode_name]

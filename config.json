@@ -36,5 +36,8 @@
         "challenge": "yonder/challenge.jpg",
         "continue": "yonder/continue.png",
         "clear": "yonder/clear.png"
+    },
+    "even_templates": {
+        "even": "even/even.jpg"
     }
 }
