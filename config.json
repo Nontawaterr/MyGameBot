@@ -38,7 +38,9 @@
         "clear": "yonder/clear.png"
     },
     "even_templates": {
-        "even": "even/even.jpg",
-        "continue": "even/continue.png"
+        "even-1": "even/even-1.png",
+        "even-2": "even/even-2.png",
+        "continue-1": "even/continue-1.png",
+        "continue-2": "even/continue-2.png"
     }
 }

@@ -52,6 +52,13 @@ MODE_TEMPLATE_KEYS = {
     "even": "even_templates",
 }
 
+# Even mode sequence — a step is done when any one of its templates is clicked
+EVEN_STEPS = (
+    ("even-1",),
+    ("even-2",),
+    ("continue-1", "continue-2"),
+)
+
 
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
@@ -239,7 +246,9 @@ class BotGUI:
             return self._run_realm
         if mode_name == "yonder":
             return self._run_yonder
-        # soul, sougenbi and even use the generic scan loop
+        if mode_name == "even":
+            return self._run_even
+        # soul and sougenbi use the generic scan loop
         return lambda: self._run_generic(mode_name)
 
     # ------------------------------------------------------------------
@@ -253,7 +262,7 @@ class BotGUI:
             self.log_message("✓ เชื่อมต่อหน้าต่างเกมสำเร็จ")
 
     def _run_generic(self, mode_name):
-        """Generic scan-and-click loop used by soul, sougenbi and even."""
+        """Generic scan-and-click loop used by soul and sougenbi."""
         try:
             self._ensure_bot()
             mode = self.modes[mode_name]
@@ -374,6 +383,56 @@ class BotGUI:
                         self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
                         self.bot.background_click(pos[0], pos[1])
                         time.sleep(0.5)
+                time.sleep(self.config["loop_delay"])
+
+        except Exception as e:
+            self.log_message(f"✗ ข้อผิดพลาด: {e!s}")
+            self.root.after(0, lambda: self.stop_mode(mode_name))
+
+    def _click_shared(self, templates, threshold):
+        """Click every visible shared template (accept, dismiss, done1, donee)."""
+        for key in self.config.get("shared_templates", {}):
+            path = templates.get(key)
+            if not path:
+                continue
+            pos = self.bot.find_image(path, threshold)
+            if pos:
+                self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
+                self.bot.background_click(pos[0], pos[1])
+                time.sleep(0.5)
+
+    def _run_even(self):
+        """Even mode — click even-1, then even-2, then continue-1/2, then start over."""
+        mode_name = "even"
+        try:
+            self._ensure_bot()
+            mode = self.modes[mode_name]
+            templates = mode["templates"]
+            threshold = self.config["confidence_threshold"]
+
+            missing = [key for step_keys in EVEN_STEPS for key in step_keys if key not in templates]
+            if missing:
+                self.log_message(f"✗ ไม่พบ even_templates: {', '.join(missing)} ใน config.json")
+                self.root.after(0, lambda: self.stop_mode(mode_name))
+                return
+
+            step = 0
+            while mode["running"]:
+                step_keys = EVEN_STEPS[step]
+                self.log_message(f"กำลังสแกน Even... (รอ {' / '.join(step_keys)})")
+
+                # shared popups can show up at any step
+                self._click_shared(templates, threshold)
+
+                for key in step_keys:
+                    pos = self.bot.find_image(templates[key], threshold)
+                    if pos:
+                        self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
+                        self.bot.background_click(pos[0], pos[1])
+                        step = (step + 1) % len(EVEN_STEPS)
+                        time.sleep(0.5)
+                        break
+
                 time.sleep(self.config["loop_delay"])
 
         except Exception as e:
