@@ -402,7 +402,15 @@ class BotGUI:
                 time.sleep(0.5)
 
     def _run_even(self):
-        """Even mode — click even-1, then even-2, then continue-1/2, then start over."""
+        """Even mode — every tick, re-check even-1, then even-2, then continue-1/2, in
+        that order, and click the first one found.
+
+        Stateless on purpose: it does NOT remember which step it last clicked. If a
+        click fails to actually advance the game (lag, a missed click, an animation
+        still playing), the previous step's template is still on screen and the next
+        tick will find and click it again — instead of the bot moving on to wait for
+        a step that never happened and getting stuck.
+        """
         mode_name = "even"
         try:
             self._ensure_bot()
@@ -416,21 +424,23 @@ class BotGUI:
                 self.root.after(0, lambda: self.stop_mode(mode_name))
                 return
 
-            step = 0
             while mode["running"]:
-                step_keys = EVEN_STEPS[step]
-                self.log_message(f"กำลังสแกน Even... (รอ {' / '.join(step_keys)})")
+                self.log_message("กำลังสแกน Even...")
 
-                # shared popups can show up at any step
+                # shared popups can show up at any point
                 self._click_shared(templates, threshold)
 
-                for key in step_keys:
-                    pos = self.bot.find_image(templates[key], threshold)
-                    if pos:
-                        self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
-                        self.bot.background_click(pos[0], pos[1])
-                        step = (step + 1) % len(EVEN_STEPS)
-                        time.sleep(0.5)
+                for step_keys in EVEN_STEPS:
+                    clicked = False
+                    for key in step_keys:
+                        pos = self.bot.find_image(templates[key], threshold)
+                        if pos:
+                            self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
+                            self.bot.background_click(pos[0], pos[1])
+                            time.sleep(0.5)
+                            clicked = True
+                            break
+                    if clicked:
                         break
 
                 time.sleep(self.config["loop_delay"])
