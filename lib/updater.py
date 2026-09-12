@@ -31,6 +31,10 @@ DEFAULT_PACKAGE_ASSET = "Rubitdd-Bot-Release.zip"
 CANONICAL_EXE_NAME = "Rubitdd-Bot.exe"
 UPDATE_EXE_NAME = "Rubitdd-Bot-update.exe"
 
+STAGE_DIR_PREFIX = "rubitdd_update_stage_"
+HELPER_DIR_PREFIX = "rubitdd_update_helper_"
+STALE_UPDATE_DIR_SECONDS = 60 * 60
+
 
 class UpdateError(RuntimeError):
     pass
@@ -86,17 +90,29 @@ def fetch_json(url, timeout=DEFAULT_TIMEOUT):
     return json.loads(payload)
 
 
-def download_file(url, destination_path, timeout=DEFAULT_TIMEOUT):
+class DownloadProgress:
+    """Byte counters a download worker updates and the Tk thread reads to draw progress."""
+
+    def __init__(self):
+        self.done = 0
+        self.total = 0
+
+
+def download_file(url, destination_path, timeout=DEFAULT_TIMEOUT, progress=None):
     destination_path = Path(destination_path)
     destination_path.parent.mkdir(parents=True, exist_ok=True)
 
     with urllib.request.urlopen(_build_request(url), timeout=timeout) as response:
+        if progress is not None:
+            progress.total = int(response.headers.get("Content-Length") or 0)
         with destination_path.open("wb") as output_file:
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
                     break
                 output_file.write(chunk)
+                if progress is not None:
+                    progress.done += len(chunk)
 
 
 def sha256_file(file_path):
@@ -255,31 +271,35 @@ try {
 
 
 def _launch_restart_helper(parent_pid, source_dir, target_dir, launch_exe_name):
-    helper_dir = Path(tempfile.mkdtemp(prefix="rubitdd_update_helper_"))
-    script_path = helper_dir / "restart.ps1"
-    _write_restart_script(script_path)
+    helper_dir = Path(tempfile.mkdtemp(prefix=HELPER_DIR_PREFIX))
+    try:
+        script_path = helper_dir / "restart.ps1"
+        _write_restart_script(script_path)
 
-    subprocess.Popen(
-        [
-            "powershell.exe",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(script_path),
-            "-ParentPid",
-            str(parent_pid),
-            "-SourceDir",
-            str(source_dir),
-            "-TargetDir",
-            str(target_dir),
-            "-LaunchExeName",
-            launch_exe_name,
-        ],
-        creationflags=subprocess.CREATE_NO_WINDOW,
-        cwd=str(target_dir),
-        env=_fresh_app_env(),
-    )
+        subprocess.Popen(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(script_path),
+                "-ParentPid",
+                str(parent_pid),
+                "-SourceDir",
+                str(source_dir),
+                "-TargetDir",
+                str(target_dir),
+                "-LaunchExeName",
+                launch_exe_name,
+            ],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            cwd=str(target_dir),
+            env=_fresh_app_env(),
+        )
+    except BaseException:
+        shutil.rmtree(helper_dir, ignore_errors=True)
+        raise
 
 
 def _fresh_app_env():
@@ -356,73 +376,182 @@ def _show_info(title, message, parent=None):
         pass
 
 
-def maybe_run_update(root, config):
-    settings = _get_update_settings(config)
+def _update_prompt(release_data, manifest):
+    notes = manifest.notes or str(release_data.get("body", "")).strip()
+    lines = [f"New version {manifest.version} is available."]
+    if notes:
+        lines += ["", notes]
+    lines += ["", "Download and install the update now?"]
+    return "\n".join(lines)
 
-    if not settings["enabled"]:
-        return False
 
-    release_api_url = settings["release_api_url"]
-    if not release_api_url or "<OWNER>" in release_api_url or "<REPO>" in release_api_url:
-        return False
+def _remove_stale_update_dirs(temp_root=None, max_age=STALE_UPDATE_DIR_SECONDS, now=None):
+    """Delete staging folders left by an update that never finished, e.g. the app was closed mid-download."""
+    temp_root = Path(temp_root or tempfile.gettempdir())
+    now = time.time() if now is None else now
+    for prefix in (STAGE_DIR_PREFIX, HELPER_DIR_PREFIX):
+        for path in temp_root.glob(prefix + "*"):
+            try:
+                if path.is_dir() and now - path.stat().st_mtime > max_age:
+                    shutil.rmtree(path, ignore_errors=True)
+            except OSError:
+                pass
 
-    if not getattr(sys, "frozen", False):
-        return False
 
+def _fetch_available_update(settings):
+    """Return (release_data, manifest) when a newer release is published, else None."""
+    _remove_stale_update_dirs()
     try:
-        release_data = fetch_json(release_api_url)
+        release_data = fetch_json(settings["release_api_url"])
         manifest = _load_manifest_from_release(release_data, settings["manifest_asset_name"])
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None  # no release published yet — not an error
+        raise
+    if not is_newer_version(manifest.version, APP_VERSION):
+        return None
+    return release_data, manifest
 
-        if not is_newer_version(manifest.version, APP_VERSION):
-            return False
 
-        notes = manifest.notes or str(release_data.get("body", "")).strip()
-        prompt = [f"New version {manifest.version} is available."]
-        if notes:
-            prompt.append("")
-            prompt.append(notes)
-        prompt.append("")
-        prompt.append("Download and install the update now?")
+def _stage_and_launch_update(release_data, manifest, settings, progress=None):
+    """Download, verify and extract the package, then start the restart helper that installs it.
 
-        if messagebox is None:
-            return False
-
-        if not messagebox.askyesno("Update available", "\n".join(prompt), parent=root):
-            return False
-
-        package_url = _find_download_url(release_data, manifest)
-        current_exe = Path(sys.executable)
-        target_dir = current_exe.parent
-        launch_exe_name = current_exe.name
-
-        stage_root = Path(tempfile.mkdtemp(prefix="rubitdd_update_stage_"))
+    If anything fails, the staging folder is deleted before the error propagates. Once the
+    helper is running it owns the folder and deletes it after copying.
+    """
+    package_url = _find_download_url(release_data, manifest)
+    current_exe = Path(sys.executable)
+    stage_root = Path(tempfile.mkdtemp(prefix=STAGE_DIR_PREFIX))
+    try:
         zip_path = stage_root / settings["package_asset_name"]
         extract_dir = stage_root / "extracted"
 
-        download_file(package_url, zip_path)
-
-        if manifest.sha256:
-            downloaded_hash = sha256_file(zip_path)
-            if downloaded_hash.lower() != manifest.sha256.lower():
-                raise UpdateError("Checksum mismatch for the downloaded package")
+        download_file(package_url, zip_path, progress=progress)
+        if manifest.sha256 and sha256_file(zip_path).lower() != manifest.sha256.lower():
+            raise UpdateError("Checksum mismatch for the downloaded package")
 
         _extract_zip(zip_path, extract_dir)
-        launch_exe = _find_launch_executable(extract_dir, launch_exe_name)
-        launch_exe_name = launch_exe.name
+        launch_exe = _find_launch_executable(extract_dir, current_exe.name)
+        _launch_restart_helper(os.getpid(), extract_dir, current_exe.parent, launch_exe.name)
+    except BaseException:
+        shutil.rmtree(stage_root, ignore_errors=True)
+        raise
 
-        _launch_restart_helper(
-            os.getpid(),
-            extract_dir,
-            target_dir,
-            launch_exe_name,
+
+def _run_in_background(root, work, on_success, on_error, poll_ms=100):
+    """Run work() on a daemon thread, then call on_success(result) or on_error(exc) on the Tk thread."""
+    outcome = {}
+
+    def target():
+        try:
+            outcome["result"] = work()
+        except BaseException as exc:
+            outcome["error"] = exc
+
+    worker = threading.Thread(target=target, daemon=True)
+    worker.start()
+
+    def poll():
+        if worker.is_alive():
+            root.after(poll_ms, poll)
+        elif "error" in outcome:
+            on_error(outcome["error"])
+        else:
+            on_success(outcome.get("result"))
+
+    root.after(poll_ms, poll)
+
+
+class _ProgressWindow:
+    """Small window that follows DownloadProgress while the download worker runs."""
+
+    def __init__(self, root, version, progress):
+        import tkinter as tk
+        from tkinter import ttk
+
+        self.progress = progress
+        self.version = version
+        self.closed = False
+        self.window = tk.Toplevel(root)
+        self.window.title("Updating Rubitdd-Bot")
+        self.window.resizable(False, False)
+        self.window.transient(root)
+        self.window.protocol("WM_DELETE_WINDOW", lambda: None)  # closing it would not stop the download
+        self.label = ttk.Label(self.window, text=f"Downloading version {version}...", width=-50)
+        self.label.pack(padx=20, pady=(16, 8))
+        self.bar = ttk.Progressbar(self.window, length=320, maximum=100)
+        self.bar.pack(padx=20, pady=(0, 16))
+        self._refresh()
+
+    def _refresh(self):
+        if self.closed:
+            return
+        done, total = self.progress.done, self.progress.total
+        mb = 1024 * 1024
+        if total and done >= total:
+            self.label.configure(text=f"Installing version {self.version}...")
+            self.bar.configure(value=100)
+        elif total:
+            percent = done * 100 // total
+            self.label.configure(text=f"Downloading version {self.version}... {percent}% ({done // mb} / {total // mb} MB)")
+            self.bar.configure(value=percent)
+        else:
+            self.label.configure(text=f"Downloading version {self.version}... {done // mb} MB")
+        self.window.after(200, self._refresh)
+
+    def close(self):
+        self.closed = True
+        try:
+            self.window.destroy()
+        except Exception:
+            pass
+
+
+def start_update_check(root, config):
+    """Check for a newer release and offer to install it without blocking the Tk main loop.
+
+    Network and file work run on worker threads; dialogs and windows stay on the Tk thread.
+    When the user accepts, a progress window follows the download, and the app closes once
+    the restart helper that installs the update is running.
+    """
+    settings = _get_update_settings(config)
+    release_api_url = settings["release_api_url"]
+    if (
+        not settings["enabled"]
+        or not release_api_url
+        or "<OWNER>" in release_api_url
+        or "<REPO>" in release_api_url
+        or not getattr(sys, "frozen", False)
+        or messagebox is None
+    ):
+        return
+
+    def on_checked(found):
+        if not found:
+            return
+        release_data, manifest = found
+        if not messagebox.askyesno("Update available", _update_prompt(release_data, manifest), parent=root):
+            return
+
+        progress = DownloadProgress()
+        window = _ProgressWindow(root, manifest.version, progress)
+
+        def on_installed(_result):
+            window.close()
+            root.destroy()  # the restart helper waits for this process to exit
+
+        def on_install_failed(exc):
+            window.close()
+            _show_error("Update failed", str(exc), parent=root)
+
+        _run_in_background(
+            root,
+            lambda: _stage_and_launch_update(release_data, manifest, settings, progress),
+            on_installed,
+            on_install_failed,
         )
-        return True
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            # No release published yet — not an error
-            return False
+
+    def on_check_failed(exc):
         _show_error("Update failed", str(exc), parent=root)
-        return False
-    except Exception as exc:
-        _show_error("Update failed", str(exc), parent=root)
-        return False
+
+    _run_in_background(root, lambda: _fetch_available_update(settings), on_checked, on_check_failed)

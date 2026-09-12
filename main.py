@@ -5,7 +5,7 @@ import threading
 import time
 
 from lib.game_control import GameControl
-from lib.updater import maybe_run_update, migrate_update_exe_name
+from lib.updater import migrate_update_exe_name, start_update_check
 from lib.version import APP_VERSION
 
 
@@ -541,9 +541,8 @@ def main():
 
     def run_update_check():
         try:
-            if config and maybe_run_update(root, config):
-                # Update accepted: close so the restart helper can replace files.
-                root.destroy()
+            # Runs in the background and closes the app itself once an accepted update is ready to install
+            start_update_check(root, config)
         except Exception:
             pass
 
