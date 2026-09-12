@@ -41,7 +41,7 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 # Mode names in display order
-MODE_NAMES = ("soul", "sougenbi", "realm", "yonder", "even")
+MODE_NAMES = ("soul", "sougenbi", "realm", "yonder", "even", "draft")
 
 # Config key for each mode's templates section
 MODE_TEMPLATE_KEYS = {
@@ -50,6 +50,7 @@ MODE_TEMPLATE_KEYS = {
     "realm": "realm_templates",
     "yonder": "yonder_templates",
     "even": "even_templates",
+    "draft": "draft_templates",
 }
 
 # Even mode sequence — a step is done when any one of its templates is clicked
@@ -58,6 +59,10 @@ EVEN_STEPS = (
     ("even-2",),
     ("continue-1", "continue-2"),
 )
+
+# Draft mode: templates the loop needs, and how far below draft-best's bottom edge to click
+DRAFT_REQUIRED_KEYS = ("accept", "draft-fight", "draft-best", "draft-victory", "continue")
+DRAFT_BEST_CLICK_OFFSET = 25  # px — the empty space 20-30px under the image
 
 
 def resource_path(relative_path):
@@ -248,6 +253,8 @@ class BotGUI:
             return self._run_yonder
         if mode_name == "even":
             return self._run_even
+        if mode_name == "draft":
+            return self._run_draft
         # soul and sougenbi use the generic scan loop
         return lambda: self._run_generic(mode_name)
 
@@ -442,6 +449,65 @@ class BotGUI:
                             break
                     if clicked:
                         break
+
+                time.sleep(self.config["loop_delay"])
+
+        except Exception as e:
+            self.log_message(f"✗ ข้อผิดพลาด: {e!s}")
+            self.root.after(0, lambda: self.stop_mode(mode_name))
+
+    def _run_draft(self):
+        """Draft mode — stateless: every tick, click whatever is on screen.
+
+        accept and draft-fight are clicked on their center; draft-best has no button, so
+        the empty space DRAFT_BEST_CLICK_OFFSET px below its bottom edge is clicked;
+        draft-victory is only logged, because continue is checked right after it.
+        """
+        mode_name = "draft"
+        try:
+            self._ensure_bot()
+            mode = self.modes[mode_name]
+            templates = mode["templates"]
+            threshold = self.config["confidence_threshold"]
+
+            missing = [key for key in DRAFT_REQUIRED_KEYS if key not in templates]
+            if missing:
+                self.log_message(f"✗ ไม่พบ draft_templates: {', '.join(missing)} ใน config.json")
+                self.root.after(0, lambda: self.stop_mode(mode_name))
+                return
+
+            best_size = self.bot.template_size(templates["draft-best"])
+            if not best_size:
+                self.log_message(f"✗ โหลดภาพ draft-best ไม่ได้: {templates['draft-best']}")
+                self.root.after(0, lambda: self.stop_mode(mode_name))
+                return
+            best_below = best_size[1] // 2 + DRAFT_BEST_CLICK_OFFSET
+
+            while mode["running"]:
+                self.log_message("กำลังสแกน Draft...")
+
+                for key in ("accept", "draft-fight"):
+                    pos = self.bot.find_image(templates[key], threshold)
+                    if pos:
+                        self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
+                        self.bot.background_click(pos[0], pos[1])
+                        time.sleep(0.5)
+
+                pos = self.bot.find_image(templates["draft-best"], threshold)
+                if pos:
+                    click_y = pos[1] + best_below
+                    self.log_message(f"✓ พบ Draft-best ที่ตำแหน่ง {pos} - กดพื้นที่ว่างด้านล่างที่ ({pos[0]}, {click_y})")
+                    self.bot.background_click(pos[0], click_y)
+                    time.sleep(0.5)
+
+                if self.bot.find_image(templates["draft-victory"], threshold):
+                    self.log_message("✓ พบ Draft-victory - เช็คปุ่ม Continue")
+
+                pos = self.bot.find_image(templates["continue"], threshold)
+                if pos:
+                    self.log_message(f"✓ พบปุ่ม Continue ที่ตำแหน่ง {pos}")
+                    self.bot.background_click(pos[0], pos[1])
+                    time.sleep(0.5)
 
                 time.sleep(self.config["loop_delay"])
 

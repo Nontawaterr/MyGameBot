@@ -141,6 +141,14 @@ class GameControl:
 
         return None
 
+    def template_size(self, template_path):
+        """Return a template image's (width, height), or None if it can't be loaded."""
+        template = cv2.imread(template_path)
+        if template is None:
+            return None
+        h, w = template.shape[:2]
+        return (w, h)
+
     def click(self, x, y):
         """
         Sends a click to the specific coordinates.
