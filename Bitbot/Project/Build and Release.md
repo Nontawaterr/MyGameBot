@@ -17,7 +17,7 @@ permalink: bitbot/project/build-and-release
 2. รัน `project_check.py`, `ruff check .`, `pytest`
 3. `cmd /c "build.bat < nul"` จะได้ `dist\Rubitdd-Bot.exe` (onefile, noconsole, icon `app.ico`)
 4. เปิด exe ดูว่าหน้าต่างขึ้นและชื่อเป็นเวอร์ชันใหม่
-5. `cmd /c "make_release.bat < nul"` จะได้ `Rubitdd-Bot-Release.zip` และ `release.json`
+5. `cmd /c "make_release.bat < nul"` จะได้ `Rubitdd-Bot-Release.zip` และ `release.json` (ใน zip คือ `Rubitdd-Bot-update.exe` ไม่ใช่ `Rubitdd-Bot.exe` ดูหัวข้อ Auto-update)
 6. เช็คว่า `release.json.sha256` ตรงกับ `Get-FileHash` ของ **zip** (ไม่ใช่ exe)
 7. อัปโหลดทั้งสองไฟล์ขึ้น GitHub Release `vX.Y.Z`
 8. เพิ่มรายการใน [[Changelog]]
@@ -39,6 +39,8 @@ permalink: bitbot/project/build-and-release
 (`lib/updater.py`)
 - ทำงานเฉพาะตอนรันจาก exe (`sys.frozen`) และ `update.enabled`
 - ดึง release ล่าสุดจาก GitHub API → หา asset `release.json` → เทียบเวอร์ชันด้วย `normalize_version`
-- ถ้าเวอร์ชันใหม่กว่า จะถามผู้ใช้ → ดาวน์โหลด zip → เช็ค SHA-256 → แตกไฟล์ → รัน PowerShell helper ที่รอให้แอปปิด แล้วคัดลอกไฟล์ทับและเปิดแอปใหม่
+- ถ้าเวอร์ชันใหม่กว่า จะถามผู้ใช้ → ดาวน์โหลด zip → เช็ค SHA-256 → แตกไฟล์ → รัน PowerShell helper (`restart.ps1`) ที่รอ process python ของแอปปิด แล้ว retry การคัดลอกได้นาน 60 วินาที (bootloader ของ onefile ยังล็อก .exe อยู่ครู่หนึ่งหลังแอปปิด) เปิด exe ใหม่ด้วย `PYINSTALLER_RESET_ENVIRONMENT=1` และถ้าคัดลอกไม่ผ่านจะแสดงหน้าต่าง error
+- **ชื่อ exe ใน zip ต้องเป็น `Rubitdd-Bot-update.exe` ทุก release** (ตั้งแต่ 1.0.6) เพราะ `restart.ps1` ของ 1.0.0–1.0.5 ไม่ retry และคัดลอกทับ `Rubitdd-Bot.exe` ที่ยังล็อกอยู่ไม่ได้ ชื่อที่ต่างกันทำให้คัดลอกผ่าน และเครื่องเก่ากระโดดไป release ล่าสุดเสมอ ถ้าเอาการเปลี่ยนชื่อออก เครื่องที่ยังไม่เคยผ่าน 1.0.6 จะกลับมาอัปเดตไม่ได้
+- ตอนเปิดแอป `migrate_update_exe_name` (เรียกต้น `main()`) ย้าย `Rubitdd-Bot-update.exe` กลับเป็น `Rubitdd-Bot.exe` แล้วเปิดใหม่ และลบไฟล์ชื่อ update ที่ค้าง ดู [[Sessions/2026-09-13 Bridge release แก้อัปเดต]]
 - ถ้ายังไม่มี release (HTTP 404) จะเงียบไป ไม่ถือเป็น error
 - ⚠️ ถ้า `sha256` ใน manifest ว่าง จะข้ามการตรวจ hash ดู [[Known Issues]]

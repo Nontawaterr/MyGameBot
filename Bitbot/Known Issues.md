@@ -27,6 +27,18 @@ permalink: bitbot/known-issues
 - **สถานการณ์:** กด ■ ตอน thread เก่ากำลัง sleep อยู่ แล้วกด ▶ ทันที → `running` กลับเป็น `True` → thread เก่าตื่นมาทำงานต่อพร้อม thread ใหม่ ทำให้คลิกซ้ำ
 - **แนวทางแก้:** ใช้ `threading.Event` แยกต่อ run หรือเก็บ run id แล้วให้ thread เช็คว่าตัวเองยังเป็น run ปัจจุบันอยู่ไหม
 
+### ~~11. เครื่องอื่นอัปเดตไม่ได้: คัดลอกไฟล์ทับตอนที่ .exe ยังถูกล็อก~~ ✅ แก้แล้ว 2026-09-13 (v1.0.6)
+- **แก้แล้ว:** zip ใช้ชื่อ `Rubitdd-Bot-update.exe`, `migrate_update_exe_name` เปลี่ยนชื่อกลับตอนเปิด, `restart.ps1` retry การคัดลอก 60 วินาทีและแจ้ง error ทดสอบผ่านรวมถึง v1.0.5 ตัวจริงจาก GitHub → v1.0.6 ดู [[Sessions/2026-09-13 Bridge release แก้อัปเดต]] (รายละเอียดด้านล่างเป็นบันทึกเดิมก่อนแก้ เลขบรรทัดอาจเลื่อนแล้ว)
+- .exe แบบ onefile ของ PyInstaller รันเป็น 2 process คือ bootloader (ตัวแม่) กับ python (ตัวลูก) และ `os.getpid()` ที่ส่งให้ `restart.ps1` (`updater.py:333`) เป็น PID ของตัวลูก
+- `restart.ps1` รอแค่ตัวลูกปิด (`updater.py:205`) แล้วคัดลอกทับทันที (`updater.py:211-213`) แต่ตอนนั้น bootloader ยังเปิดอยู่ (กำลังลบโฟลเดอร์ `_MEI`) และล็อกไฟล์ .exe ไว้
+- `Copy-Item` ล้มเหลวแบบ non-terminating สคริปต์ทำต่อจนจบและลบไฟล์อัปเดตที่โหลดมาทิ้ง (`updater.py:220`) ทดสอบกับ `restart.ps1` ตัวจริงแล้ว แอปปิดไปเฉยๆ ไม่มีตัวไหนเปิดขึ้นมาใหม่
+- **สถานการณ์:** กด Yes อัปเดต → แอปปิดไป → ผู้ใช้เปิดเองก็ยังเป็นเวอร์ชันเดิม และถูกถามให้อัปเดตอีก วนไม่จบ
+- **ทดสอบ 2026-09-13:** จำลองขั้นติดตั้งด้วย .exe จริง logic เดิมล้มเหลว 3/3 รอบ (`The process cannot access the file ... because it is being used by another process`) ถ้ารอ bootloader ปิดก่อนคัดลอก ผ่าน 2/2 รอบ
+- **แนวทางแก้:** ส่ง PID ของ bootloader (`os.getppid()` ตอน frozen) ให้สคริปต์รอด้วย, retry การคัดลอกจนสำเร็จโดยมี timeout, และถ้าคัดลอกไม่สำเร็จห้ามเปิดเวอร์ชันเดิมแบบเงียบๆ
+- **เครื่องที่ติดเวอร์ชันเก่า:** รัน `restart.ps1` ตัวเก่าที่ฝังอยู่ใน .exe ของตัวเอง ตัวแก้จึงช่วยตรงๆ ไม่ได้ ทางออกมี 2 ทาง
+  - ดาวน์โหลด zip มาแตกทับเองหนึ่งครั้ง
+  - **Bridge release (ทดสอบ 2026-09-13 ผ่าน):** ถ้า .exe ใน zip ใช้ **ชื่ออื่น** เช่น `Rubitdd-Bot-bridge.exe` ไฟล์ไม่ชนกับตัวที่ล็อกอยู่ สคริปต์ตัวเก่าคัดลอกผ่าน `_find_launch_executable` เลือกตัวใหม่ (`updater.py:177`) เปิดตัวใหม่ให้เอง และลบไฟล์ staging ครบ แต่ `Rubitdd-Bot.exe` ตัวเก่าจะค้างอยู่ในโฟลเดอร์ ต้องมีขั้นเก็บกวาดหรือเปลี่ยนชื่อกลับในเวอร์ชันนั้น
+
 ## 🟡 ปานกลาง
 
 ### 3. Realm ไม่กด shared accept, dismiss, donee
@@ -43,6 +55,13 @@ permalink: bitbot/known-issues
 
 ### 6. Updater ข้ามการตรวจ hash ถ้า `sha256` ว่าง
 - `if manifest.sha256:` (`updater.py:323`) ถ้าอัป `release.json` ที่ไม่มี hash จะติดตั้งโดยไม่ตรวจ
+
+### 12. หน้าต่างค้างระหว่างดาวน์โหลดอัปเดต
+- `maybe_run_update` ถูกเรียกผ่าน `root.after` บน main thread ของ Tk (`main.py:547`) และ `download_file` (`updater.py:321`) โหลด zip ~60MB แบบบล็อก ไม่มี progress
+- **สถานการณ์:** กด Yes แล้วหน้าต่างขึ้น Not Responding จนโหลดเสร็จ ผู้ใช้อาจคิดว่าแฮงค์แล้วปิดทิ้ง
+
+### 13. โฟลเดอร์ temp ของอัปเดตรั่วเมื่อล้มเหลว
+- `stage_root` (`updater.py:317`) ถูกลบเฉพาะใน `restart.ps1` ตอนอัปเดตสำเร็จ ถ้า error ก่อนถึง `_launch_restart_helper` (โหลดขาด, hash ไม่ตรง, หา .exe ไม่เจอ) จะเหลือไฟล์ ~60MB ค้างใน `%TEMP%` ทุกครั้ง
 
 ## ⚪ เล็กน้อย / เครื่องมือ
 - 7. `build.bat` และ `make_release.bat` จบด้วย `pause` และใช้ `python`/`pyinstaller` จาก PATH ไม่ใช่ `.venv`
