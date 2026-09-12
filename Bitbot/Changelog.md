@@ -13,6 +13,10 @@ permalink: bitbot/changelog
 
 สร้างจาก `git log` ใหม่สุดอยู่บน
 
+## 1.0.7 (2026-09-13)
+- แก้หน้าต่างค้างระหว่างอัปเดต: งาน network และไฟล์ย้ายไป worker thread และมีหน้าต่าง progress ([[Known Issues]] ข้อ 12)
+- ลบโฟลเดอร์ temp ของอัปเดตที่ล้มเหลวหรือถูกปิดกลางทาง ([[Known Issues]] ข้อ 13) (`08a5c1c`) ดู [[Sessions/2026-09-13 แก้อัปเดตค้างและ temp รั่ว]]
+
 ## 1.0.6 (2026-09-13)
 - แก้เครื่องอื่นอัปเดตอัตโนมัติไม่ได้ (bridge release): zip ใช้ชื่อ `Rubitdd-Bot-update.exe`, แอปเปลี่ยนชื่อกลับเอง, `restart.ps1` retry การคัดลอกและแจ้ง error (`642e34e`) ดู [[Sessions/2026-09-13 Bridge release แก้อัปเดต]]
 

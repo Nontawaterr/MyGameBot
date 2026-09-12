@@ -56,11 +56,14 @@ permalink: bitbot/known-issues
 ### 6. Updater ข้ามการตรวจ hash ถ้า `sha256` ว่าง
 - `if manifest.sha256:` (`updater.py:323`) ถ้าอัป `release.json` ที่ไม่มี hash จะติดตั้งโดยไม่ตรวจ
 
-### 12. หน้าต่างค้างระหว่างดาวน์โหลดอัปเดต
-- `maybe_run_update` ถูกเรียกผ่าน `root.after` บน main thread ของ Tk (`main.py:547`) และ `download_file` (`updater.py:321`) โหลด zip ~60MB แบบบล็อก ไม่มี progress
+### ~~12. หน้าต่างค้างระหว่างดาวน์โหลดอัปเดต~~ ✅ แก้แล้ว 2026-09-13 (v1.0.7)
+- **แก้แล้ว:** `start_update_check` ทำงาน network และไฟล์บน worker thread และมีหน้าต่าง progress ทดสอบแล้วหน้าต่างตอบสนอง 30/30 ครั้งระหว่างดาวน์โหลด ดู [[Sessions/2026-09-13 แก้อัปเดตค้างและ temp รั่ว]]
+- (บันทึกเดิมก่อนแก้) `maybe_run_update` ถูกเรียกผ่าน `root.after` บน main thread ของ Tk (`main.py:547`) และ `download_file` (`updater.py:321`) โหลด zip ~60MB แบบบล็อก ไม่มี progress
 - **สถานการณ์:** กด Yes แล้วหน้าต่างขึ้น Not Responding จนโหลดเสร็จ ผู้ใช้อาจคิดว่าแฮงค์แล้วปิดทิ้ง
 
-### 13. โฟลเดอร์ temp ของอัปเดตรั่วเมื่อล้มเหลว
+### ~~13. โฟลเดอร์ temp ของอัปเดตรั่วเมื่อล้มเหลว~~ ✅ แก้แล้ว 2026-09-13 (v1.0.7)
+- **แก้แล้ว:** `_stage_and_launch_update` ลบโฟลเดอร์ staging ทุกครั้งที่ล้มเหลว และ `_remove_stale_update_dirs` ลบโฟลเดอร์ที่ค้างเกิน 1 ชั่วโมงตอนเช็คอัปเดต ทดสอบ hash ไม่ตรงแล้วไม่มีโฟลเดอร์ค้าง
+- (บันทึกเดิมก่อนแก้)
 - `stage_root` (`updater.py:317`) ถูกลบเฉพาะใน `restart.ps1` ตอนอัปเดตสำเร็จ ถ้า error ก่อนถึง `_launch_restart_helper` (โหลดขาด, hash ไม่ตรง, หา .exe ไม่เจอ) จะเหลือไฟล์ ~60MB ค้างใน `%TEMP%` ทุกครั้ง
 
 ## ⚪ เล็กน้อย / เครื่องมือ
