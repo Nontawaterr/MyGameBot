@@ -1,0 +1,235 @@
+{
+  "main": {
+    "id": "c27551a1818763b6",
+    "type": "split",
+    "children": [
+      {
+        "id": "fc6bcdeaf1dd6d4a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "38b426818164a988",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "AI Tooling/Claude Code Setup.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Claude Code Setup"
+            }
+          }
+        ]
+      },
+      {
+        "id": "09a2baa78b7f9736",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "55056bc1ba6e6d74",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "มุมมองกราฟ"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "359a1330b0664202",
+    "type": "split",
+    "children": [
+      {
+        "id": "825e805dca21021e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "688980f127660280",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "File explorer"
+            }
+          },
+          {
+            "id": "538df90e29d6e58a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "ค้นหา"
+            }
+          },
+          {
+            "id": "a2392a64b1ba0513",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "บุ๊กมาร์ก"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "fa0e0240e3fd14b4",
+    "type": "split",
+    "children": [
+      {
+        "id": "1c3fc320b9dff9ce",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "dc90c90f1a9e3347",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "AI Tooling/Claude Code Setup.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "แบ็คลิงค์ของ Claude Code Setup"
+            }
+          },
+          {
+            "id": "dd2edf3a98589de9",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "AI Tooling/Claude Code Setup.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "ลิงค์ขาออกของ Claude Code Setup"
+            }
+          },
+          {
+            "id": "0d4c096b2c251fd7",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "แท็ก"
+            }
+          },
+          {
+            "id": "de72568692878224",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "คุณสมบัติทั้งหมด"
+            }
+          },
+          {
+            "id": "617a122352e58f08",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "AI Tooling/Claude Code Setup.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "โครงเรื่องของ Claude Code Setup"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:เปิด quick switcher": false,
+      "graph:เปิดมุมมองกราฟ": false,
+      "canvas:สร้างผืนผ้าใบใหม่": false,
+      "daily-notes:เปิดโน้ตของวันนี้": false,
+      "templates:แทรกเทมเพลต": false,
+      "command-palette:เปิดกระดานคำสั่ง": false,
+      "bases:สร้างฐานใหม่": false
+    }
+  },
+  "active": "38b426818164a988",
+  "lastOpenFiles": [
+    "Known Issues.md",
+    "ยินดีต้อนรับ.md",
+    "Sessions/2026-09-11 Claude Code tooling setup.md.tmp.24712.04d60102f548",
+    "ยินดีต้อนรับ.tmp",
+    "Changelog.tmp",
+    "Templates/Mode.md",
+    "Templates/Mode.md.tmp.24712.c7b2075efa22",
+    "Templates/Decision.md",
+    "Templates/Decision.md.tmp.24712.e21c03cc1330",
+    "Templates/Session Note.md",
+    "Templates/Session Note.md.tmp.24712.ad0cca64e4a5",
+    "Templates",
+    "Sessions/2026-09-11 Claude Code tooling setup.md",
+    "Sessions/2026-09-11 Claude Code tooling setup.md.tmp.24712.e2938eab2eae",
+    "Sessions",
+    "AI Tooling/Claude Code Setup.md",
+    "AI Tooling/Claude Code Setup.md.tmp.24712.11b408e0eb08",
+    "Decisions/0001 Use Bitbot vault as project knowledge base.md",
+    "Changelog.md",
+    "Modes/Even.md",
+    "Modes/Yonder.md",
+    "Modes/Realm.md",
+    "Modes/Sougenbi.md",
+    "Modes/Soul.md",
+    "Project/Glossary.md",
+    "Project/Build and Release.md",
+    "Project/Config.md",
+    "Project/Architecture.md",
+    "Project/Overview.md",
+    "Home.md"
+  ]
+}

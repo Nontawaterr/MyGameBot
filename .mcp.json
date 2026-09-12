@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "bitbot-memory": {
+      "command": "basic-memory",
+      "args": ["mcp", "--project", "bitbot"]
+    }
+  }
+}
