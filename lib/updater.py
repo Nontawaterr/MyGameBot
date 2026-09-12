@@ -1,9 +1,12 @@
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -21,6 +24,12 @@ USER_AGENT = "Rubitdd-Bot-Updater/1.0"
 DEFAULT_TIMEOUT = 15
 DEFAULT_MANIFEST_ASSET = "release.json"
 DEFAULT_PACKAGE_ASSET = "Rubitdd-Bot-Release.zip"
+
+# Releases ship the exe as UPDATE_EXE_NAME. The restart script in 1.0.0-1.0.5 copies the new exe
+# over the running one right after the app exits, while the PyInstaller bootloader still locks it,
+# so that copy fails; a different file name avoids the clash. The app renames itself back on launch.
+CANONICAL_EXE_NAME = "Rubitdd-Bot.exe"
+UPDATE_EXE_NAME = "Rubitdd-Bot-update.exe"
 
 
 class UpdateError(RuntimeError):
@@ -201,19 +210,36 @@ def _write_restart_script(script_path):
     [string]$LaunchExeName
 )
 
+$ErrorActionPreference = 'Stop'
+
 try {
     while (Get-Process -Id $ParentPid -ErrorAction SilentlyContinue) {
-        Start-Sleep -Seconds 1
+        Start-Sleep -Milliseconds 250
     }
 
     New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
 
-    Get-ChildItem -LiteralPath $SourceDir -Force | ForEach-Object {
-        Copy-Item -LiteralPath $_.FullName -Destination $TargetDir -Recurse -Force
+    # A one-file exe stays locked for a moment after the app exits (its bootloader process
+    # cleans up first, antivirus may scan it), so keep retrying the copy for a while.
+    $deadline = (Get-Date).AddSeconds(60)
+    while ($true) {
+        try {
+            Get-ChildItem -LiteralPath $SourceDir -Force | ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination $TargetDir -Recurse -Force
+            }
+            break
+        } catch {
+            if ((Get-Date) -gt $deadline) { throw }
+            Start-Sleep -Milliseconds 500
+        }
     }
 
     $launchPath = Join-Path $TargetDir $LaunchExeName
     Start-Process -FilePath $launchPath -WorkingDirectory $TargetDir
+} catch {
+    Add-Type -AssemblyName System.Windows.Forms
+    $message = "Update failed: $($_.Exception.Message)`n`nDownload Rubitdd-Bot-Release.zip from the GitHub Releases page and extract it over the old files."
+    [System.Windows.Forms.MessageBox]::Show($message, 'Rubitdd-Bot update failed') | Out-Null
 } finally {
     $stageRoot = Split-Path -Parent $SourceDir
     $helperRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -252,7 +278,62 @@ def _launch_restart_helper(parent_pid, source_dir, target_dir, launch_exe_name):
         ],
         creationflags=subprocess.CREATE_NO_WINDOW,
         cwd=str(target_dir),
+        env=_fresh_app_env(),
     )
+
+
+def _fresh_app_env():
+    """Environment for starting a frozen exe as its own app instead of a child of this process."""
+    env = dict(os.environ)
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
+
+
+def _copy_with_retry(source, destination, attempts=20, delay=0.5):
+    for attempt in range(attempts):
+        try:
+            shutil.copyfile(source, destination)
+            return True
+        except OSError:
+            if attempt < attempts - 1:
+                time.sleep(delay)
+    return False
+
+
+def _remove_with_retry(path, attempts=60, delay=0.5):
+    for _ in range(attempts):
+        try:
+            Path(path).unlink()
+            return
+        except FileNotFoundError:
+            return
+        except OSError:
+            time.sleep(delay)
+
+
+def migrate_update_exe_name():
+    """Move a freshly installed UPDATE_EXE_NAME back to CANONICAL_EXE_NAME.
+
+    Running as the update name: copy this exe over CANONICAL_EXE_NAME, start that copy and
+    return True so the caller exits. Running as the canonical name: delete a leftover update
+    exe in the background, since it stays locked for a moment while that process exits.
+    """
+    if not getattr(sys, "frozen", False):
+        return False
+
+    exe = Path(sys.executable)
+    canonical = exe.with_name(CANONICAL_EXE_NAME)
+
+    if exe.name.lower() == UPDATE_EXE_NAME.lower():
+        if not _copy_with_retry(exe, canonical):
+            return False  # e.g. the old exe is still open; keep running under the update name
+        subprocess.Popen([str(canonical)], cwd=str(exe.parent), env=_fresh_app_env())
+        return True
+
+    leftover = exe.with_name(UPDATE_EXE_NAME)
+    if exe.name.lower() == CANONICAL_EXE_NAME.lower() and leftover.exists():
+        threading.Thread(target=_remove_with_retry, args=(leftover,), daemon=True).start()
+    return False
 
 
 def _show_error(title, message, parent=None):

@@ -10,8 +10,13 @@ if not exist "dist\Rubitdd-Bot.exe" (
 
 for /f %%V in ('python -c "from lib.version import APP_VERSION; print(APP_VERSION)"') do set VERSION=%%V
 
-echo Zipping files from dist folder...
-powershell -NoProfile -Command "Compress-Archive -Path dist\* -DestinationPath Rubitdd-Bot-Release.zip -Force"
+echo Zipping Rubitdd-Bot.exe as Rubitdd-Bot-update.exe...
+REM The zip ships the exe under another name: the updater in 1.0.0-1.0.5 can't overwrite the
+REM still-locked running Rubitdd-Bot.exe. The app renames itself back on first launch.
+if exist "build\release" rmdir /s /q "build\release"
+mkdir "build\release"
+copy /y "dist\Rubitdd-Bot.exe" "build\release\Rubitdd-Bot-update.exe" >nul
+powershell -NoProfile -Command "Compress-Archive -Path build\release\* -DestinationPath Rubitdd-Bot-Release.zip -Force"
 
 echo Creating release manifest...
 powershell -NoProfile -Command ^

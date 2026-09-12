@@ -5,7 +5,7 @@ import threading
 import time
 
 from lib.game_control import GameControl
-from lib.updater import maybe_run_update
+from lib.updater import maybe_run_update, migrate_update_exe_name
 from lib.version import APP_VERSION
 
 
@@ -523,6 +523,10 @@ def load_config():
 
 
 def main():
+    # Releases install as Rubitdd-Bot-update.exe; move back to Rubitdd-Bot.exe and restart under that name
+    if migrate_update_exe_name():
+        return
+
     root = ctk.CTk()
 
     config = None
