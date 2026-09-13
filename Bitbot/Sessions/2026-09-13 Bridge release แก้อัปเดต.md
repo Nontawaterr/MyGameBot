@@ -6,6 +6,7 @@ tags:
 - updater
 - release
 created: 2026-09-13
+permalink: bitbot/sessions/2026-09-13-bridge-release-aek-apedt
 ---
 
 # 2026-09-13: Bridge release แก้อัปเดตอัตโนมัติ (v1.0.6)

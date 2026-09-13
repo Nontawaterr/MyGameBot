@@ -34,6 +34,7 @@ permalink: bitbot/home
 | [[Modes/Yonder\|yonder]] | กดทุกปุ่มที่เจอ + ต้องมี `challenge` | `confidence_threshold` | `yonder/` |
 | [[Modes/Even\|even]] | เช็คตามลำดับใหม่ทุกรอบ (step sequence แบบ stateless) | `confidence_threshold` | `even/` |
 | [[Modes/Draft\|draft]] | กฎเฉพาะแบบ stateless + offset click | `confidence_threshold` | `draft/` |
+| [[Modes/Bondling\|bondling]] | ยังไม่มี loop (หน้า UI + ตัวเลือกย่อย ฟาม / จับ) | - | - |
 
 ภาพที่ใช้ร่วมทุกโหมดอยู่ใน `assets/shared/`: accept, dismiss, done1, donee
 
@@ -47,6 +48,7 @@ permalink: bitbot/home
   - [[Sessions/2026-09-13 เพิ่มโหมด draft]]
   - [[Sessions/2026-09-13 Bridge release แก้อัปเดต]]
   - [[Sessions/2026-09-13 แก้อัปเดตค้างและ temp รั่ว]]
+  - [[Sessions/2026-09-13 เพิ่มแท็บ bondling]]
 
 ## 🤖 AI Tooling
 - [[AI Tooling/Claude Code Setup]]
