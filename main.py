@@ -41,7 +41,10 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 # Mode names in display order
-MODE_NAMES = ("soul", "sougenbi", "realm", "yonder", "even", "draft")
+MODE_NAMES = ("soul", "sougenbi", "realm", "yonder", "even", "draft", "bondling")
+
+# Bondling sub-modes (key -> button label); UI only for now, no scan loop yet
+BONDLING_SUB_MODES = {"farm": "ฟาม", "catch": "จับ"}
 
 # Config key for each mode's templates section
 MODE_TEMPLATE_KEYS = {
@@ -109,13 +112,27 @@ class BotGUI:
         """Create the standard status + start/stop buttons inside a tab."""
         tab = self.tab_control.tab(mode_name)
 
+        # Bondling picks a sub-mode (farm/catch) above the status line
+        sub_mode = None
+        if mode_name == "bondling":
+            sub_mode = ctk.CTkSegmentedButton(
+                tab,
+                values=list(BONDLING_SUB_MODES.values()),
+                font=("Arial", 13, "bold"),
+                width=240,
+                height=30,
+                dynamic_resizing=False,
+            )
+            sub_mode.set(BONDLING_SUB_MODES["farm"])
+            sub_mode.pack(pady=(8, 0))
+
         status = ctk.CTkLabel(
             tab,
             text="● สถานะ: ปิด",
             font=("Arial", 14, "bold"),
             text_color="#ff6b6b",
         )
-        status.pack(pady=20)
+        status.pack(pady=10 if sub_mode else 20)
 
         btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
         btn_frame.pack(pady=10)
@@ -152,6 +169,7 @@ class BotGUI:
         mode["status"] = status
         mode["start_btn"] = start_btn
         mode["stop_btn"] = stop_btn
+        mode["sub_mode"] = sub_mode
 
     def setup_ui(self):
         # Header Frame
@@ -255,6 +273,10 @@ class BotGUI:
             return self._run_even
         if mode_name == "draft":
             return self._run_draft
+        if mode_name == "bondling":
+            # read the widget here on the Tk thread, not inside the worker
+            sub_label = self.modes[mode_name]["sub_mode"].get()
+            return lambda: self._run_bondling(sub_label)
         # soul and sougenbi use the generic scan loop
         return lambda: self._run_generic(mode_name)
 
@@ -514,6 +536,12 @@ class BotGUI:
         except Exception as e:
             self.log_message(f"✗ ข้อผิดพลาด: {e!s}")
             self.root.after(0, lambda: self.stop_mode(mode_name))
+
+    def _run_bondling(self, sub_label):
+        """Bondling mode — UI only for now: farm and catch have no scan loop yet."""
+        mode_name = "bondling"
+        self.log_message(f"✗ Bondling ({sub_label}) ยังไม่มีการทำงาน")
+        self.root.after(0, lambda: self.stop_mode(mode_name))
 
 
 def load_config():
