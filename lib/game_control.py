@@ -1,13 +1,13 @@
-import win32gui
-import win32ui
-import win32con
-import win32api
 import ctypes
-import numpy as np
-import cv2
 import os
 import time
-import sys
+
+import cv2
+import numpy as np
+import win32api
+import win32con
+import win32gui
+import win32ui
 
 
 def _safe_print(msg):
