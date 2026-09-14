@@ -43,7 +43,7 @@ permalink: bitbot/modes/draft
 
 ## ประวัติ
 - 2026-09-13 เพิ่มโหมด draft (v1.0.5, ยังไม่ได้ทดสอบกับเกมจริง)
-- 2026-09-15 `draft-best` เปลี่ยนจากกดพื้นที่ว่างใต้ภาพ 25px เป็นกดตรงกลางภาพ ลบ `DRAFT_BEST_CLICK_OFFSET` และ `GameControl.template_size` (ยังไม่ release)
+- 2026-09-15 `draft-best` เปลี่ยนจากกดพื้นที่ว่างใต้ภาพ 25px เป็นกดตรงกลางภาพ ลบ `DRAFT_BEST_CLICK_OFFSET` และ `GameControl.template_size` (v1.0.8, ยังไม่ได้ทดสอบกับเกมจริง)
 
 ## Template notes
 - 2026-09-13 `draft-best` เดิม (327×462) มีป้ายชื่อตัวละคร ("Rider") และฉากหลังเคลื่อนไหวติดอยู่ในภาพ เสี่ยงแมตช์ไม่ติดถ้าตัวละครเปลี่ยน
