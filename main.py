@@ -50,7 +50,7 @@ BONDLING_SUB_MODES = {"farm": "ฟาม", "catch": "จับ"}
 EVEN_SUB_MODES = {"farm": "Farm", "activity": "Activity"}
 EVEN_SUB_TEMPLATES = {
     "farm": ("farm-1",),
-    "activity": ("activity-1", "activity-2", "activity-3"),
+    "activity": ("activity-1", "roll", "activity-2", "activity-3"),
 }
 EVEN_CONTINUE_KEYS = ("continue-1", "continue-2")
 
@@ -445,7 +445,7 @@ class BotGUI:
 
     def _run_even(self, sub_key):
         """Even mode — stateless: every tick click the shared popups, then the templates of the
-        selected sub-mode (Farm: farm-1; Activity: activity-1/2/3), then continue.
+        selected sub-mode (Farm: farm-1; Activity: activity-1, roll, activity-2, activity-3), then continue.
 
         Stateless on purpose: nothing is remembered between ticks, so a click the game missed
         is found again and retried on the next tick instead of leaving the bot stuck.

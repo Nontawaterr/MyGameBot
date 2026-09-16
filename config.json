@@ -40,6 +40,7 @@
     "even_templates": {
         "farm-1": "even/Farm/farm-1.png",
         "activity-1": "even/activity/activity-1.png",
+        "roll": "even/activity/roll.png",
         "activity-2": "even/activity/activity-2.png",
         "activity-3": "even/activity/activity-3.png",
         "continue-1": "assets/continue-1.png",
