@@ -14,7 +14,7 @@ permalink: bitbot/home
 **Rubitdd-Bot** (repo `MyGameBot`) คือบอทอัตโนมัติสำหรับเกม **Onmyoji (陰陽師)** บน Windows
 บอทจับภาพหน้าต่างเกม หาปุ่มด้วย OpenCV template matching แล้วคลิกแบบเบื้องหลัง จึงไม่ต้องขยับเมาส์จริง
 
-- **เวอร์ชันล่าสุด:** `1.0.9` (2026-09-17)
+- **เวอร์ชันล่าสุด:** `1.0.10` (2026-09-17)
 - **โฟลเดอร์:** `E:\1Web-Program\MyGameBot`
 - **GitHub:** `Nontawaterr/MyGameBot` (ใช้ Releases สำหรับ auto-update)
 

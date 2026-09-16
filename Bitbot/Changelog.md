@@ -13,6 +13,9 @@ permalink: bitbot/changelog
 
 สร้างจาก `git log` ใหม่สุดอยู่บน
 
+## 1.0.10 (2026-09-17)
+- โหมด [[Modes/Even|even]] sub-mode Activity เพิ่มเช็คปุ่ม roll แทรกหลัง activity-1 (`39046c4`)
+
 ## 1.0.9 (2026-09-17)
 - โหมด [[Modes/Even|even]] แยกเป็น sub-mode Farm / Activity เลือกด้วยปุ่มเหนือบรรทัดสถานะ (`0f10793`)
 
