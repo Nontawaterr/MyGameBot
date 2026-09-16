@@ -32,7 +32,7 @@ permalink: bitbot/home
 | [[Modes/Sougenbi\|sougenbi]] | กดทุกปุ่มที่เจอ (generic) | `confidence_threshold` | `sougenbi/` |
 | [[Modes/Realm\|realm]] | กฎเฉพาะ (hogan block) | `realm_confidence` | `realm/` |
 | [[Modes/Yonder\|yonder]] | กดทุกปุ่มที่เจอ + ต้องมี `challenge` | `confidence_threshold` | `yonder/` |
-| [[Modes/Even\|even]] | เช็คตามลำดับใหม่ทุกรอบ (step sequence แบบ stateless) | `confidence_threshold` | `even/` |
+| [[Modes/Even\|even]] | เลือกแท็บย่อย Farm / Activity แล้วกดทุกปุ่มที่เจอ (stateless) | `confidence_threshold` | `even/Farm/`, `even/activity/` |
 | [[Modes/Draft\|draft]] | กฎเฉพาะแบบ stateless + offset click | `confidence_threshold` | `draft/` |
 | [[Modes/Bondling\|bondling]] | ยังไม่มี loop (หน้า UI + ตัวเลือกย่อย ฟาม / จับ) | - | - |
 

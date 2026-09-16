@@ -32,7 +32,7 @@ permalink: bitbot/project/config
 | `sougenbi_templates` | [[Modes/Sougenbi\|sougenbi]] | start, donee1 |
 | `realm_templates` | [[Modes/Realm\|realm]] | hogan, next, attack, mark, lose, lose1 |
 | `yonder_templates` | [[Modes/Yonder\|yonder]] | challenge (`.jpg`), continue, clear |
-| `even_templates` | [[Modes/Even\|even]] | even-1, even-2, continue-1, continue-2 |
+| `even_templates` | [[Modes/Even\|even]] | farm-1, activity-1, activity-2, activity-3, continue-1, continue-2 (continue ชี้ไป `assets/`) |
 | `draft_templates` | [[Modes/Draft\|draft]] | draft-fight, draft-best, draft-victory, continue (ชี้ไป `assets/continue.png`) |
 
 **กฎการรวม:** `{**shared, **mode}` ถ้า key ซ้ำ ค่าของโหมดจะชนะ ทำให้ override ภาพ shared เฉพาะโหมดได้

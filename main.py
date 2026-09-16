@@ -46,6 +46,17 @@ MODE_NAMES = ("soul", "sougenbi", "realm", "yonder", "even", "draft", "bondling"
 # Bondling sub-modes (key -> button label); UI only for now, no scan loop yet
 BONDLING_SUB_MODES = {"farm": "ฟาม", "catch": "จับ"}
 
+# Even sub-modes (key -> button label) and the templates each one clicks
+EVEN_SUB_MODES = {"farm": "Farm", "activity": "Activity"}
+EVEN_SUB_TEMPLATES = {
+    "farm": ("farm-1",),
+    "activity": ("activity-1", "activity-2", "activity-3"),
+}
+EVEN_CONTINUE_KEYS = ("continue-1", "continue-2")
+
+# Tabs that pick a sub-mode with a segmented button above the status line
+MODE_SUB_MODES = {"even": EVEN_SUB_MODES, "bondling": BONDLING_SUB_MODES}
+
 # Config key for each mode's templates section
 MODE_TEMPLATE_KEYS = {
     "soul": "templates",
@@ -55,13 +66,6 @@ MODE_TEMPLATE_KEYS = {
     "even": "even_templates",
     "draft": "draft_templates",
 }
-
-# Even mode sequence — a step is done when any one of its templates is clicked
-EVEN_STEPS = (
-    ("even-1",),
-    ("even-2",),
-    ("continue-1", "continue-2"),
-)
 
 # Draft mode: templates the loop needs
 DRAFT_REQUIRED_KEYS = ("accept", "draft-fight", "draft-best", "draft-victory", "continue")
@@ -111,18 +115,19 @@ class BotGUI:
         """Create the standard status + start/stop buttons inside a tab."""
         tab = self.tab_control.tab(mode_name)
 
-        # Bondling picks a sub-mode (farm/catch) above the status line
+        # even and bondling pick a sub-mode above the status line
         sub_mode = None
-        if mode_name == "bondling":
+        sub_modes = MODE_SUB_MODES.get(mode_name)
+        if sub_modes:
             sub_mode = ctk.CTkSegmentedButton(
                 tab,
-                values=list(BONDLING_SUB_MODES.values()),
+                values=list(sub_modes.values()),
                 font=("Arial", 13, "bold"),
                 width=240,
                 height=30,
                 dynamic_resizing=False,
             )
-            sub_mode.set(BONDLING_SUB_MODES["farm"])
+            sub_mode.set(next(iter(sub_modes.values())))
             sub_mode.pack(pady=(8, 0))
 
         status = ctk.CTkLabel(
@@ -262,6 +267,14 @@ class BotGUI:
 
         self.log_message(f"=== หยุดทำงานบอท {mode_name.capitalize()} ===")
 
+    def _selected_sub_mode(self, mode_name):
+        """Key of the sub-mode picked in the tab's segmented button (read on the Tk thread)."""
+        label = self.modes[mode_name]["sub_mode"].get()
+        for key, text in MODE_SUB_MODES[mode_name].items():
+            if text == label:
+                return key
+        return next(iter(MODE_SUB_MODES[mode_name]))
+
     def _get_run_target(self, mode_name):
         """Return the callable for the mode's worker thread."""
         if mode_name == "realm":
@@ -269,11 +282,12 @@ class BotGUI:
         if mode_name == "yonder":
             return self._run_yonder
         if mode_name == "even":
-            return self._run_even
+            # read the sub-mode widget here on the Tk thread, not inside the worker
+            sub_key = self._selected_sub_mode(mode_name)
+            return lambda: self._run_even(sub_key)
         if mode_name == "draft":
             return self._run_draft
         if mode_name == "bondling":
-            # read the widget here on the Tk thread, not inside the worker
             sub_label = self.modes[mode_name]["sub_mode"].get()
             return lambda: self._run_bondling(sub_label)
         # soul and sougenbi use the generic scan loop
@@ -429,15 +443,12 @@ class BotGUI:
                 self.bot.background_click(pos[0], pos[1])
                 time.sleep(0.5)
 
-    def _run_even(self):
-        """Even mode — every tick, re-check even-1, then even-2, then continue-1/2, in
-        that order, and click the first one found.
+    def _run_even(self, sub_key):
+        """Even mode — stateless: every tick click the shared popups, then the templates of the
+        selected sub-mode (Farm: farm-1; Activity: activity-1/2/3), then continue.
 
-        Stateless on purpose: it does NOT remember which step it last clicked. If a
-        click fails to actually advance the game (lag, a missed click, an animation
-        still playing), the previous step's template is still on screen and the next
-        tick will find and click it again — instead of the bot moving on to wait for
-        a step that never happened and getting stuck.
+        Stateless on purpose: nothing is remembered between ticks, so a click the game missed
+        is found again and retried on the next tick instead of leaving the bot stuck.
         """
         mode_name = "even"
         try:
@@ -445,30 +456,34 @@ class BotGUI:
             mode = self.modes[mode_name]
             templates = mode["templates"]
             threshold = self.config["confidence_threshold"]
+            sub_keys = EVEN_SUB_TEMPLATES[sub_key]
+            sub_label = EVEN_SUB_MODES[sub_key]
 
-            missing = [key for step_keys in EVEN_STEPS for key in step_keys if key not in templates]
+            missing = [key for key in sub_keys + EVEN_CONTINUE_KEYS if key not in templates]
             if missing:
                 self.log_message(f"✗ ไม่พบ even_templates: {', '.join(missing)} ใน config.json")
                 self.root.after(0, lambda: self.stop_mode(mode_name))
                 return
 
             while mode["running"]:
-                self.log_message("กำลังสแกน Even...")
+                self.log_message(f"กำลังสแกน Even ({sub_label})...")
 
                 # shared popups can show up at any point
                 self._click_shared(templates, threshold)
 
-                for step_keys in EVEN_STEPS:
-                    clicked = False
-                    for key in step_keys:
-                        pos = self.bot.find_image(templates[key], threshold)
-                        if pos:
-                            self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
-                            self.bot.background_click(pos[0], pos[1])
-                            time.sleep(0.5)
-                            clicked = True
-                            break
-                    if clicked:
+                for key in sub_keys:
+                    pos = self.bot.find_image(templates[key], threshold)
+                    if pos:
+                        self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
+                        self.bot.background_click(pos[0], pos[1])
+                        time.sleep(0.5)
+
+                for key in EVEN_CONTINUE_KEYS:
+                    pos = self.bot.find_image(templates[key], threshold)
+                    if pos:
+                        self.log_message(f"✓ พบปุ่ม {key.capitalize()} ที่ตำแหน่ง {pos}")
+                        self.bot.background_click(pos[0], pos[1])
+                        time.sleep(0.5)
                         break
 
                 time.sleep(self.config["loop_delay"])
