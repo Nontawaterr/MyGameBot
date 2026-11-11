@@ -6,7 +6,7 @@ tags:
 - mode
 - even
 created: 2026-09-11
-updated: 2026-09-17
+updated: 2026-11-12
 permalink: bitbot/modes/even
 ---
 
@@ -55,5 +55,6 @@ permalink: bitbot/modes/even
 - 2026-09-17 Activity เพิ่มเช็คปุ่ม `roll` แทรกหลัง `activity-1` (v1.0.9, ยังไม่ได้ทดสอบกับเกมจริง)
 
 ## Template notes
+- 2026-11-12 เปลี่ยน `farm-1` เป็นภาพล่าสุดขนาด 147×111 (`SHA-256` ขึ้นต้น `149F9FAF`) และ rebuild `dist/Rubitdd-Bot.exe` แล้ว; ยังไม่ได้ทดสอบจับภาพกับเกมจริง
 - 2026-09-17 `farm-1` กับ `activity-2` เป็นปุ่ม Challenge รูปเดียวกัน (145×118) ต่างกันแค่ชื่อไฟล์ตาม sub-mode
 - 2026-09-17 `activity-3` ผู้ใช้ crop ใหม่ให้เหลือแค่วงกลม ไม่มีตัวเลขคะแนนติดมา จึงกดตรงกลางภาพได้เลย ไม่ต้องอ่านเลข

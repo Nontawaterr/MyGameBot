@@ -5,13 +5,18 @@ tags:
 - mygamebot
 - release
 created: 2026-09-11
-updated: 2026-09-13
+updated: 2026-11-12
 permalink: bitbot/changelog
 ---
 
 # Changelog
 
 สร้างจาก `git log` ใหม่สุดอยู่บน
+
+## 1.1.0 (2026-11-12)
+- อัปเดตภาพ `sougenbi/start.png` และ `even/Farm/farm-1.png` เป็นภาพล่าสุด
+- ปรับ `build.bat` ให้หยุดเมื่อ PyInstaller ล้มเหลวหรือไฟล์ output ถูกล็อก
+- ปรับ `make_release.bat` ให้สร้าง `release.json` และ SHA-256 ด้วย Python พร้อมหยุดเมื่อแพ็ก release ล้มเหลว
 
 ## 1.0.10 (2026-09-17)
 - โหมด [[Modes/Even|even]] sub-mode Activity เพิ่มเช็คปุ่ม roll แทรกหลัง activity-1 (`39046c4`)

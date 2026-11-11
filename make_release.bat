@@ -9,6 +9,10 @@ if not exist "dist\Rubitdd-Bot.exe" (
 )
 
 for /f %%V in ('python -c "from lib.version import APP_VERSION; print(APP_VERSION)"') do set VERSION=%%V
+if not defined VERSION (
+    echo Error: Could not read APP_VERSION.
+    exit /b 1
+)
 
 echo Zipping Rubitdd-Bot.exe as Rubitdd-Bot-update.exe...
 REM The zip ships the exe under another name: the updater in 1.0.0-1.0.5 can't overwrite the
@@ -16,15 +20,22 @@ REM still-locked running Rubitdd-Bot.exe. The app renames itself back on first l
 if exist "build\release" rmdir /s /q "build\release"
 mkdir "build\release"
 copy /y "dist\Rubitdd-Bot.exe" "build\release\Rubitdd-Bot-update.exe" >nul
+if errorlevel 1 (
+    echo Error: Could not prepare the update executable.
+    exit /b 1
+)
 powershell -NoProfile -Command "Compress-Archive -Path build\release\* -DestinationPath Rubitdd-Bot-Release.zip -Force"
+if errorlevel 1 (
+    echo Error: Could not create Rubitdd-Bot-Release.zip.
+    exit /b 1
+)
 
 echo Creating release manifest...
-powershell -NoProfile -Command ^
-  "$version = '%VERSION%';" ^
-  "$zipName = 'Rubitdd-Bot-Release.zip';" ^
-  "$hash = (Get-FileHash -Algorithm SHA256 -Path $zipName).Hash.ToLower();" ^
-  "$manifest = [ordered]@{ version = $version; asset_name = $zipName; asset_url = ''; sha256 = $hash; notes = '' };" ^
-  "$manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 'release.json'"
+python -c "import hashlib,json,pathlib; p=pathlib.Path('Rubitdd-Bot-Release.zip'); manifest={'version':'%VERSION%','asset_name':p.name,'asset_url':'','sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'notes':''}; pathlib.Path('release.json').write_text(json.dumps(manifest, indent=4), encoding='utf-8')"
+if errorlevel 1 (
+    echo Error: Could not create release.json.
+    exit /b 1
+)
 
 echo.
 echo ========================================================

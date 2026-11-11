@@ -6,7 +6,7 @@ tags:
 - release
 - build
 created: 2026-09-11
-updated: 2026-09-13
+updated: 2026-11-12
 permalink: bitbot/project/build-and-release
 ---
 
@@ -25,6 +25,8 @@ permalink: bitbot/project/build-and-release
 > [!warning] `build.bat` และ `make_release.bat` จบด้วย `pause`
 > ถ้าให้ agent หรือสคริปต์รัน ต้องต่อท้ายด้วย `< nul` ไม่อย่างนั้นจะค้าง
 > ทั้งสองไฟล์ใช้ `python` และ `pyinstaller` จาก PATH ให้ activate `.venv` ก่อน
+
+ตั้งแต่ `1.1.0` ทั้งสองสคริปต์จะคืน exit code ที่ไม่ใช่ศูนย์เมื่อ build/package ล้มเหลว และ `make_release.bat` ใช้ Python สร้าง SHA-256 กับ JSON เพื่อลดปัญหา cmdlet ต่างกันระหว่าง PowerShell environments
 
 ## ไฟล์ที่ bundle เข้า exe
 `assets`, `sougenbi`, `realm`, `yonder`, `even`, `draft`, `config.json`

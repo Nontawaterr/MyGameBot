@@ -5,7 +5,7 @@ tags:
 - mygamebot
 - index
 created: 2026-09-11
-updated: 2026-09-13
+updated: 2026-11-12
 permalink: bitbot/home
 ---
 
@@ -44,6 +44,7 @@ permalink: bitbot/home
 - Decisions
   - [[Decisions/0001 Use Bitbot vault as project knowledge base]]
 - Sessions
+  - [[Sessions/2026-11-12 ปรับภาพ Farm ล่าสุด]]
   - [[Sessions/2026-09-11 Claude Code tooling setup]]
   - [[Sessions/2026-09-13 เพิ่มโหมด draft]]
   - [[Sessions/2026-09-13 Bridge release แก้อัปเดต]]
